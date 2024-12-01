@@ -1,0 +1,66 @@
+{
+    "main" : {
+        "desc" : "主界面设置",
+        "title" : "记忆碎片",
+        "layout" : {
+            "font" : "Microsoft YaHei", "fontsize" : 10, "x" : 300, "y" : 300, "w" : 1200, "h" : 650
+        }
+    },
+
+    "welcome" : {
+        "desc" : "欢迎框",
+        "layout" : {
+            "font" : "Microsoft YaHei", "fontsize" : 14, "bold" : true, "x" : 105, "y" : 20, "w" : 400, "h" : 35
+        },
+        "greeting" : {
+            "morning" : "早上好",
+            "noon" : "中午好",
+            "afternoon" : "下午好",
+            "evening" : "晚上好",
+            "night" : "夜深了",
+            "midnight" : "什么阴间时间了，还不睡觉"
+        }
+    },
+
+    "search" : {
+        "desc" : "搜索框",
+        "title" : "请输入搜索内容",
+        "layout" : {
+            "font" : "Microsoft YaHei", "fontsize" : 15, "x" : 80, "y" : 90, "w" : 750, "h" : 75,
+            "style" : "QLineEdit { border: 2px solid gray;} QLineEdit:placeholder { color: gray; }"
+        }
+    },
+
+    "page" : {
+        "desc" : "标签页面，和标签按钮一一对应",
+        "layout" : {
+            "font" : "Microsoft YaHei", "fontsize" : 15, "x" : 70, "y" : 260, "w" : 750, "h" : 400
+        }
+    },
+
+    "tagButton" : {
+        "desc" : "标签按钮",
+        "name" : {
+            "0" : "最近", "1" : "收藏", "2" : "项目"
+        },
+        "layout" : {
+            "font" : "Microsoft YaHei", "fontsize" : 12, "x" : 80, "y" : 210, "w" : 60, "h" : 40, "xOffset" : 100,
+            "style" : "QPushButton {background-color: transparent;border: none;padding: 5px;}QPushButton:pressed {background-color: #d0d0d0;}",
+            "selectedStyle" : "QPushButton {background-color: transparent;border: none;border-bottom: 2px solid gray;padding: 5px;}"
+        }
+    },
+
+    "opsButton" : {
+        "desc" : "基本操作图标按钮",
+        "path" : {
+            "new" : "\\icon\\new.png",
+            "open" : "\\icon\\open.png",
+            "import" : "\\icon\\import.png"
+        },
+        "layout" : {
+            "x" : 1000, "y" : 70, "w" : 150, "h" : 150, "yOffset" : 200,
+            "style" : "QPushButton {background-color: transparent; border: none; padding: 5px;} QPushButton:pressed {background-color: #d0d0d0;}"
+        },
+        "iconSize" : 150
+    }
+}
