@@ -3,9 +3,62 @@ import time
 import json
 from datetime import datetime
 import os
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QStackedWidget, QSizePolicy, QSpacerItem, QLineEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QStackedWidget, QDialog, QLineEdit
 from PyQt5.QtCore import QThread, pyqtSignal, QRect, Qt, QSize
 from PyQt5.QtGui import QFont, QIcon, QPixmap
+import FragOps
+
+class NewFragMemWork(QThread):
+    signal = pyqtSignal()
+
+    def __init__(self, ops, key, content, tagList):
+        super().__init__()
+        self.key = key
+        self.content = content
+        self.tagList = tagList
+        self.ops = ops
+
+    def run(self):
+        self.FragMem = FragOps.FragMem(self.key, self.content, self.tagList)
+        self.ops.newFrag(self.FragMem)
+        self.signal.emit()
+
+
+# 创建记忆碎片的交互界面，等待用户输入信息（关键词、内容、标签）
+# todo: 可选标签，或新建自定义标签
+# todo: 用户可以回车直接确认，可以不经过按钮点击
+class NewFragMemDialog(QDialog):
+    def __init__(self, parent=None):
+        super(NewFragMemDialog, self).__init__(parent)
+        self.parent = parent
+        self.setWindowTitle('新建记忆碎片')
+
+        self.layout = QVBoxLayout(self)
+        self.keyBox = QLineEdit(self)
+        self.keyBox.setPlaceholderText('关键词（可选）')
+        self.contentBox = QLineEdit(self)
+        self.contentBox.setPlaceholderText('内容（默认拷贝剪切板）')
+
+        self.buttonBox = QHBoxLayout()
+        self.okButton = QPushButton('确认')
+        self.okButton.clicked.connect(self.__ok_button_click)
+        self.cancelButton = QPushButton('取消')
+        self.buttonBox.addWidget(self.okButton)
+        self.buttonBox.addWidget(self.cancelButton)
+
+        self.layout.addWidget(self.keyBox)
+        self.layout.addWidget(self.contentBox)
+        self.layout.addLayout(self.buttonBox)
+        self.setFixedSize(800, 400)
+    
+    def __ok_button_click(self):
+        key = self.keyBox.text()
+        content = self.contentBox.text()
+        tagList = ['医护门口机']
+        fragMem = FragOps.FragMem(key, content, tagList)
+        self.parent.ops.newFrag(fragMem)
+        self.close()
+
 
 class Tag(QWidget):
     def __init__(self, tag, parent=None):
@@ -104,6 +157,8 @@ class App(QWidget):
             self.layoutConfigure(button, self.confData['opsButton']['layout'], i)
             self.opsButtonList.append(button)
             i += 1
+        # bind new click
+        self.opsButtonList[0].clicked.connect(self.__newClick)
 
     def getWelcome(self):
         hour = datetime.now().hour
@@ -129,7 +184,12 @@ class App(QWidget):
         pass
 
     def initData(self):
-        pass
+        self.ops = FragOps.FragOps('mem.xlsx', 'Manfred')
+
+    def __newClick(self):
+        dialog = NewFragMemDialog(self)
+        dialog.exec_()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
