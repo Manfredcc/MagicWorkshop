@@ -1,7 +1,14 @@
 {
     "user" : {
         "name" : "今天也要开心！",
-        "contact" : ""
+        "contact" : "",
+        "edit" : "notepad"
+    },
+
+    "memory" : {
+        "desc" : "当前加载的记忆文件",
+        "path" : "\\memory\\",
+        "name" : "mem.xlsx"
     },
 
     "main" : {
@@ -59,7 +66,7 @@
         "desc" : "基本操作图标按钮",
         "path" : {
             "new" : "\\icon\\new.png",
-            "open" : "\\icon\\open.png",
+            "open" : "\\icon\\set.png",
             "import" : "\\icon\\import.png"
         },
         "layout" : {

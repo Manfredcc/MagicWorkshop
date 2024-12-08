@@ -4,24 +4,31 @@ import json
 from datetime import datetime
 import os
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QStackedWidget, QDialog, QLineEdit
-from PyQt5.QtCore import QThread, pyqtSignal, QRect, Qt, QSize
+from PyQt5.QtCore import QThread, pyqtSignal, QRect, Qt, QSize, QProcess
 from PyQt5.QtGui import QFont, QIcon, QPixmap
 import FragOps
 
-class NewFragMemWork(QThread):
-    signal = pyqtSignal()
 
-    def __init__(self, ops, key, content, tagList):
-        super().__init__()
-        self.key = key
-        self.content = content
-        self.tagList = tagList
-        self.ops = ops
+# todo 导入逻辑：复制一个excel文件，并选择操作：
+# 1.更换记忆
+# 2.将记忆并入（颗粒度可以精确到天、月、年）
 
-    def run(self):
-        self.FragMem = FragOps.FragMem(self.key, self.content, self.tagList)
-        self.ops.newFrag(self.FragMem)
-        self.signal.emit()
+# fix me!
+# class NewFragMemWork(QThread):
+#     signal = pyqtSignal()
+
+#     def __init__(self, ops, key, content, tagList):
+#         super().__init__()
+#         self.key = key
+#         self.content = content
+#         self.tagList = tagList
+#         self.ops = ops
+
+#     def run(self):
+#         self.FragMem = FragOps.FragMem(self.key, self.content, self.tagList)
+#         self.ops.newFrag(self.FragMem)
+#         self.signal.emit()
+
 
 
 # 创建记忆碎片的交互界面，等待用户输入信息（关键词、内容、标签）
@@ -29,7 +36,7 @@ class NewFragMemWork(QThread):
 # todo: 用户可以回车直接确认，可以不经过按钮点击
 class NewFragMemDialog(QDialog):
     def __init__(self, parent=None):
-        super(NewFragMemDialog, self).__init__(parent)
+        super().__init__(parent)
         self.parent = parent
         self.setWindowTitle('新建记忆碎片')
 
@@ -43,6 +50,7 @@ class NewFragMemDialog(QDialog):
         self.okButton = QPushButton('确认')
         self.okButton.clicked.connect(self.__ok_button_click)
         self.cancelButton = QPushButton('取消')
+        self.cancelButton.clicked.connect(self.__cancel_button_click)
         self.buttonBox.addWidget(self.okButton)
         self.buttonBox.addWidget(self.cancelButton)
 
@@ -57,6 +65,9 @@ class NewFragMemDialog(QDialog):
         tagList = ['医护门口机']
         fragMem = FragOps.FragMem(key, content, tagList)
         self.parent.ops.newFrag(fragMem)
+        self.close()
+    
+    def __cancel_button_click(self):
         self.close()
 
 
@@ -94,8 +105,8 @@ class App(QWidget):
 
     def loadConf(self):
         self.curPath = os.path.dirname(os.path.abspath(__file__))
-        self.confFile = r'\conf\defCOnf.json'
-        with open(self.curPath + self.confFile, 'r', encoding='utf-8') as file:
+        self.confFile = self.curPath + r'\conf\defCOnf.json'
+        with open(self.confFile, 'r', encoding='utf-8') as file:
             self.confData = json.load(file)
 
     def layoutConfigure(self, obj, layout, index=-1):
@@ -159,6 +170,7 @@ class App(QWidget):
             i += 1
         # bind new click
         self.opsButtonList[0].clicked.connect(self.__newClick)
+        self.opsButtonList[1].clicked.connect(self.__setClick)
 
     def getWelcome(self):
         hour = datetime.now().hour
@@ -184,12 +196,21 @@ class App(QWidget):
         pass
 
     def initData(self):
-        self.ops = FragOps.FragOps('mem.xlsx', 'Manfred')
+        self.user = self.confData['user']['name']
+        self.memPath = self.confData['memory']['path']
+        self.memFile = self.curPath + self.memPath + self.confData['memory']['name']
+        self.ops = FragOps.FragOps(self.memFile, self.user)
 
     def __newClick(self):
         dialog = NewFragMemDialog(self)
         dialog.exec_()
 
+    # todo 将浏览UI改为设置，配置各个参数
+    # todo 检查配置状态，动态更新部分设置，不能更新的就提醒用户重启应用才能生效，可以选择是否现在重启
+    def __setClick(self):
+        self.process = QProcess(self)
+        self.process.start(self.confData['user']['edit'], [self.confFile])
+        
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
