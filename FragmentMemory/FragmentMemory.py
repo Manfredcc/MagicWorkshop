@@ -1,34 +1,47 @@
 import sys
 import shutil
-import time
 import json
 from datetime import datetime
 import os
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QStackedWidget, QDialog, QLineEdit, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QStackedWidget, QDialog, QLineEdit, QFileDialog, QMessageBox, QListWidget, QListWidgetItem
 from PyQt5.QtCore import QThread, pyqtSignal, QRect, Qt, QSize, QProcess
 from PyQt5.QtGui import QFont, QIcon, QPixmap
 import FragOps
+import threading
+import time
+import pyperclip
 
+# todo 添加ruler筛选搜索结果
 
+# 持续检测搜索框内容，搜索结果
+class searchCheckWork(QThread):
+    signal = pyqtSignal(int)
 
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
 
-# fix me!
-# class NewFragMemWork(QThread):
-#     signal = pyqtSignal()
-
-#     def __init__(self, ops, key, content, tagList):
-#         super().__init__()
-#         self.key = key
-#         self.content = content
-#         self.tagList = tagList
-#         self.ops = ops
-
-#     def run(self):
-#         self.FragMem = FragOps.FragMem(self.key, self.content, self.tagList)
-#         self.ops.newFrag(self.FragMem)
-#         self.signal.emit()
-
-
+    def run(self):
+        oldText = ''
+        while not self.parent.threadStopEvent.is_set():
+            text = self.parent.searchBox.text()
+            if text == oldText:
+                time.sleep(0.3)
+            elif text == '':
+                oldText = text
+                self.parent.page.widget(3).clear()
+                self.signal.emit(0)
+            else:
+                oldText = text
+                # fixme! 筛选模式和作者名
+                rowValuesList = self.parent.ops.search(text)
+                self.signal.emit(3)
+                self.parent.page.widget(3).clear()
+                for rowValue in rowValuesList: # fixme! 暂时显示简要信息
+                    key = str(rowValue[0])
+                    content = str(rowValue[1])
+                    item = QListWidgetItem(key + ' : ' + content)
+                    self.parent.page.widget(3).addItem(item)
 
 # 创建记忆碎片的交互界面，等待用户输入信息（关键词、内容、标签）
 # todo: 可选标签，或新建自定义标签
@@ -68,28 +81,6 @@ class NewFragMemDialog(QDialog):
     
     def __cancel_button_click(self):
         self.close()
-
-
-class Tag(QWidget):
-    def __init__(self, tag, parent=None):
-        super(Tag, self).__init__(parent)
-        self.parent = parent
-        layout = QVBoxLayout(self)
-        self.label = QLabel(f'{tag} hello world')
-        self.label.setFont(QFont("Microsoft YaHei", 10))
-        self.label3 = QLabel(f'{tag} I am constanc while world changes')
-        self.label3.setFont(QFont("Microsoft YaHei", 10))
-        self.label4 = QLabel(f'{tag} I love u, pidundun')
-        self.label4.setFont(QFont("Microsoft YaHei", 10))
-        self.label5 = QLabel(f'{tag} I miss u, a pi')
-        self.label5.setFont(QFont("Microsoft YaHei", 10))
-        self.label6 = QLabel(f'{tag} no matter where you are')
-        self.label6.setFont(QFont("Microsoft YaHei", 10))
-        layout.addWidget(self.label)
-        layout.addWidget(self.label3)
-        layout.addWidget(self.label4)
-        layout.addWidget(self.label5)
-        layout.addWidget(self.label6)
 
 class App(QWidget):
     def __init__(self):
@@ -142,21 +133,23 @@ class App(QWidget):
         self.searchBox = QLineEdit(self)
         self.searchBox.setPlaceholderText(self.confData['search']['title'])
         self.layoutConfigure(self.searchBox, self.confData['search']['layout'])
+        # 页面
+        self.pageButtonList = [] # 保存所有的标签按钮实例
+        self.pageNameList = list(self.confData['pageButton']['name'].values())
         # 基本标签页面
         self.page = QStackedWidget(self)
         self.layoutConfigure(self.page, self.confData['page']['layout'])
-        # 标签按钮
-        self.tagButtonList = [] # 保存所有的标签按钮实例
-        self.tagNameList = list(self.confData['tagButton']['name'].values())
+        self.createScroll()
+        # 页面按钮
         i = 0
-        for t in self.tagNameList: # 为每个按钮创建页面内容，并添加到page中统一管理
-            self.page.addWidget(Tag(t, self))
+        for t in self.pageNameList: # 为每个页面创建一个按钮
             button = QPushButton(t, self)
-            self.layoutConfigure(button, self.confData['tagButton']['layout'], i)
-            button.clicked.connect(self.tagButtonCallback)
-            self.tagButtonList.append(button)
+            self.layoutConfigure(button, self.confData['pageButton']['layout'], i)
+            button.clicked.connect(self.pageButtonClick)
+            self.pageButtonList.append(button)
             i += 1
-        self.tagButtonList[0].setStyleSheet(self.confData['tagButton']['layout']['selectedStyle']) # 默认选中第一个页面，更改按钮样式
+        self.pageButtonList[0].setStyleSheet(self.confData['pageButton']['layout']['selectedStyle']) # 默认选中第一个页面，更改按钮样式
+        self.lastPageButtonIndex = 0
         # 基本操作图标
         self.opsButtonList = []
         i = 0
@@ -182,15 +175,32 @@ class App(QWidget):
         elif 18 <= hour < 22:   return self.confData['welcome']['greeting']['evening'] + ', ' + self.user
         else:                   return self.confData['welcome']['greeting']['night']
 
-    def tagButtonCallback(self): # 根据按下的不同按钮，切换到指定页面
+    def pageButtonClick(self): # 根据按下的不同按钮，切换到指定页面
         clickedButton = self.sender()
-        index = self.tagNameList.index(clickedButton.text())
-        self.page.setCurrentIndex(index)
-        for b in self.tagButtonList: # 颜色标记选中的页面对应的按钮
-            if b == clickedButton:
-                b.setStyleSheet(self.confData['tagButton']['layout']['selectedStyle'])
-            else:
-                b.setStyleSheet(self.confData['tagButton']['layout']['style'])
+        index = self.pageNameList.index(clickedButton.text())
+        self.pushPageButton(index)
+        
+    def pushPageButton(self, index):
+        if self.lastPageButtonIndex == index:
+            return
+        else:
+            self.lastPageButtonIndex = index
+            self.page.setCurrentIndex(index)
+
+        for b in self.pageButtonList: # 清空按钮颜色
+            b.setStyleSheet(self.confData['pageButton']['layout']['style'])
+        # 将点击的按钮下划线标记
+        self.pageButtonList[index].setStyleSheet(self.confData['pageButton']['layout']['selectedStyle'])
+
+    def scrollItemClick(self, item):
+        pyperclip.copy(item.text())
+
+    def createScroll(self):
+        for t in self.pageNameList:
+            listWidget = QListWidget()
+            listWidget.itemClicked.connect(self.scrollItemClick)
+            self.layoutConfigure(listWidget, self.confData['scroll']['layout'])
+            self.page.addWidget(listWidget)
 
     # 绑定UI和操作
     def bind(self):
@@ -200,6 +210,10 @@ class App(QWidget):
         self.memPath = self.curPath + self.confData['memory']['path']
         self.memFile = self.memPath + self.confData['memory']['name']
         self.ops = FragOps.FragOps(self.memFile, self.user)
+        self.threadStopEvent = threading.Event()
+        self.searchCheckThread = searchCheckWork(self)
+        self.searchCheckThread.signal.connect(self.pushPageButton)
+        self.searchCheckThread.start()
 
     def __newClick(self):
         dialog = NewFragMemDialog(self)
@@ -228,7 +242,10 @@ class App(QWidget):
                     QMessageBox.warning(self, 'Error', f'Failed to copy file: {e}')
             else:
                 QMessageBox.warning(self, 'Invalid File', 'Please select a valid Excel file (.xlsx or .xls).')
-        
+
+    def closeEvent(self, event):
+        self.threadStopEvent.set()
+        print("Exit FragmentMemory Program...")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

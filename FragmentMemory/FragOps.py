@@ -90,23 +90,28 @@ class FragOps:
         # 筛选结果
         filterResult = self.__filter(result, author, tagSet)
         # test 打印搜索结果
+        rowValuesList = []
         for i in range(0, len(filterResult), 2):
             worksheet = filterResult[i]
             indexList = filterResult[i+1]
             print(f'worksheet:{worksheet} indexList:{indexList}')
             for index in indexList:
                 rowValues = [cell.value for cell in worksheet[index]]
-                print(rowValues)
+                # print(rowValues)
+                rowValuesList.append(rowValues)
+        return rowValuesList
 
     # 基本搜索模式：模糊搜索
     # 按从大到小的顺序，返回worksheet里，和keyword匹配度最高的键值对的索引号
     def __fuzzySearchT(self, ws, keyword):
         ratioList = [] # 记录匹配度
-        for row in ws.iter_rows(min_col=2, max_col=3, values_only=True):
+        for row in ws.iter_rows(min_col=1, max_col=2, values_only=True):
             ratioList.append(fuzz.partial_ratio(keyword, row))
-        maxRatioList = heapq.nlargest(5, ratioList) # 获取n个最大匹配度的值
+        maxRatioList = heapq.nlargest(10, ratioList) # 获取n个最大匹配度的值
         indexList = [] # 记录最大匹配度内容对应的索引号
         for t in maxRatioList:
+            if t < 30:
+                continue
             index = ratioList.index(t)
             ratioList[index] = 0 # 不忽略匹配度相同的索引号
             index += 1
@@ -127,7 +132,6 @@ class FragOps:
     # 过滤器
     def __filter(self, resultRaw, author=None, tagSet=set()):
         if not author and not tagSet: return resultRaw # 无筛选条件，直接返回
-        print('in')
         result = []
         for i in range(0, len(resultRaw), 2): # 遍历所有列表
             ws = resultRaw[i] # worksheet
