@@ -1,17 +1,16 @@
 import sys
+import shutil
 import time
 import json
 from datetime import datetime
 import os
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QStackedWidget, QDialog, QLineEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QHBoxLayout, QLabel, QStackedWidget, QDialog, QLineEdit, QFileDialog, QMessageBox
 from PyQt5.QtCore import QThread, pyqtSignal, QRect, Qt, QSize, QProcess
 from PyQt5.QtGui import QFont, QIcon, QPixmap
 import FragOps
 
 
-# todo 导入逻辑：复制一个excel文件，并选择操作：
-# 1.更换记忆
-# 2.将记忆并入（颗粒度可以精确到天、月、年）
+
 
 # fix me!
 # class NewFragMemWork(QThread):
@@ -171,6 +170,7 @@ class App(QWidget):
         # bind new click
         self.opsButtonList[0].clicked.connect(self.__newClick)
         self.opsButtonList[1].clicked.connect(self.__setClick)
+        self.opsButtonList[2].clicked.connect(self.__importClick)
 
     def getWelcome(self):
         hour = datetime.now().hour
@@ -197,8 +197,8 @@ class App(QWidget):
 
     def initData(self):
         self.user = self.confData['user']['name']
-        self.memPath = self.confData['memory']['path']
-        self.memFile = self.curPath + self.memPath + self.confData['memory']['name']
+        self.memPath = self.curPath + self.confData['memory']['path']
+        self.memFile = self.memPath + self.confData['memory']['name']
         self.ops = FragOps.FragOps(self.memFile, self.user)
 
     def __newClick(self):
@@ -210,6 +210,23 @@ class App(QWidget):
     def __setClick(self):
         self.process = QProcess(self)
         self.process.start(self.confData['user']['edit'], [self.confFile])
+    
+    # todo 导入逻辑：复制一个excel文件，并选择操作：
+    # 1.更换记忆
+    # 2.将记忆并入（颗粒度可以精确到天、月、年）
+    def __importClick(self):
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getOpenFileName(self, "Select Excel File", "", "Excel Files (*.xlsx *.xls);;All Files (*)", options=options)
+ 
+        if file_name:
+            if file_name.lower().endswith(('.xlsx', '.xls')):
+                try:
+                    shutil.copy(file_name, os.path.join(self.memPath, os.path.basename(file_name)))
+                    QMessageBox.information(self, 'Success', f'File {file_name} copied to {self.memPath}')
+                except Exception as e:
+                    QMessageBox.warning(self, 'Error', f'Failed to copy file: {e}')
+            else:
+                QMessageBox.warning(self, 'Invalid File', 'Please select a valid Excel file (.xlsx or .xls).')
         
 
 if __name__ == '__main__':
