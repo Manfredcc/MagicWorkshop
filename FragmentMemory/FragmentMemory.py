@@ -15,7 +15,7 @@ import pyperclip
 
 # 持续检测搜索框内容，搜索结果
 class searchCheckWork(QThread):
-    signal = pyqtSignal(int)
+    indexChange = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -30,17 +30,19 @@ class searchCheckWork(QThread):
             elif text == '':
                 oldText = text
                 self.parent.page.widget(3).clear()
-                self.signal.emit(0)
+                self.indexChange.emit(0)
             else:
                 oldText = text
                 # fixme! 筛选模式和作者名
                 rowValuesList = self.parent.ops.search(text)
-                self.signal.emit(3)
+                self.indexChange.emit(3)
                 self.parent.page.widget(3).clear()
-                for rowValue in rowValuesList: # fixme! 暂时显示简要信息
-                    key = str(rowValue[0])
-                    content = str(rowValue[1])
-                    item = QListWidgetItem(key + ' : ' + content)
+                for rowValue in rowValuesList:
+                    if rowValue[0] != None: # key exists
+                        item = QListWidgetItem(str(rowValue[0]) + ' : ' + str(rowValue[1]))
+                    else:
+                        item = QListWidgetItem(str(rowValue[1]))
+                    item.setData(Qt.UserRole, rowValue)
                     self.parent.page.widget(3).addItem(item)
 
 # 创建记忆碎片的交互界面，等待用户输入信息（关键词、内容、标签）
@@ -164,6 +166,9 @@ class App(QWidget):
         self.opsButtonList[0].clicked.connect(self.__newClick)
         self.opsButtonList[1].clicked.connect(self.__setClick)
         self.opsButtonList[2].clicked.connect(self.__importClick)
+        # 详情列表
+        self.detail = QLabel(self)
+        self.layoutConfigure(self.detail, self.confData['detail']['layout'])
 
     def getWelcome(self):
         self.user = self.confData['user']['name']
@@ -191,8 +196,17 @@ class App(QWidget):
             b.setStyleSheet(self.confData['pageButton']['layout']['style'])
         # 将点击的按钮下划线标记
         self.pageButtonList[index].setStyleSheet(self.confData['pageButton']['layout']['selectedStyle'])
+    
+    def showDetail(self, author, time, tagList):
+        pass
 
     def scrollItemClick(self, item):
+        data = item.data(Qt.UserRole)
+        time = data[4] if len(data) > 4 else "Unknown Time"
+        author = data[3] if len(data) > 3 else "Unknown Author"
+        tagList = data[2] if len(data) > 2 else []
+        detail = f"Time : {time}  |  Author : {author}  |  Tags : {str(tagList)}"
+        self.detail.setText(detail)
         pyperclip.copy(item.text())
 
     def createScroll(self):
@@ -212,7 +226,7 @@ class App(QWidget):
         self.ops = FragOps.FragOps(self.memFile, self.user)
         self.threadStopEvent = threading.Event()
         self.searchCheckThread = searchCheckWork(self)
-        self.searchCheckThread.signal.connect(self.pushPageButton)
+        self.searchCheckThread.indexChange.connect(self.pushPageButton)
         self.searchCheckThread.start()
 
     def __newClick(self):

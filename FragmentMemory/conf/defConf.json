@@ -46,7 +46,7 @@
     "scroll" : {
         "desc" : "页面里滚动列表布局",
         "layout" : {
-            "font" : "Microsoft YaHei", "fontsize" : 12, "x" : 80, "y" : 260, "w" : 700, "h" : 340
+            "font" : "Microsoft YaHei", "fontsize" : 11, "x" : 80, "y" : 260, "w" : 700, "h" : 340
         }
     },
 
@@ -81,5 +81,13 @@
             "style" : "QPushButton {background-color: transparent; border: none; padding: 5px;} QPushButton:pressed {background-color: #d0d0d0;}"
         },
         "iconSize" : 150
+    },
+
+    "detail" : {
+        "desc" : "展示选中的记忆详情",
+        "layout" : {
+            "font" : "Microsoft YaHei", "fontsize" : 9, "x" : 80, "y" : 600, "w" : 800, "h" : 40,
+            "style" : "color: gray;"
+        }
     }
 }
