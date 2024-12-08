@@ -60,7 +60,7 @@
     "pageButton" : {
         "desc" : "页面按钮",
         "name" : {
-            "0" : "历史", "1" : "收藏", "2" : "最近", "3" : "结果"
+            "0" : "全局", "1" : "历史", "2" : "收藏", "3" : "最近"
         },
         "layout" : {
             "font" : "Microsoft YaHei", "fontsize" : 12, "x" : 80, "y" : 210, "w" : 60, "h" : 40, "xOffset" : 100,
@@ -89,5 +89,17 @@
             "font" : "Microsoft YaHei", "fontsize" : 9, "x" : 80, "y" : 600, "w" : 800, "h" : 40,
             "style" : "color: gray;"
         }
+    },
+
+    "history" : {
+        "desc" : "历史记录",
+        "path" : "\\history\\",
+        "max" : 50
+    },
+
+    "lately" : {
+        "desc" : "最近新建",
+        "path" : "\\history\\",
+        "max" : 50
     }
 }

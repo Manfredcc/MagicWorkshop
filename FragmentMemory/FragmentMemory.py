@@ -13,9 +13,19 @@ import pyperclip
 
 # todo 添加ruler筛选搜索结果
 
+class history(QThread):
+    signal = pyqtSignal()
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+    
+    def run(self):
+        pass
+
 # 持续检测搜索框内容，搜索结果
 class searchCheckWork(QThread):
-    indexChange = pyqtSignal(int)
+    signal = pyqtSignal() # reserve
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -29,21 +39,25 @@ class searchCheckWork(QThread):
                 time.sleep(0.3)
             elif text == '':
                 oldText = text
-                self.parent.page.widget(3).clear()
-                self.indexChange.emit(0)
+                self.parent.page.widget(self.parent.lastPageButtonIndex).clear()
+            elif self.parent.lastPageButtonIndex == 0:
+                oldText = text
+                self.parent.page.widget(self.parent.lastPageButtonIndex).clear()
+                self.__global_search(text)
             else:
                 oldText = text
-                # fixme! 筛选模式和作者名
-                rowValuesList = self.parent.ops.search(text)
-                self.indexChange.emit(3)
-                self.parent.page.widget(3).clear()
-                for rowValue in rowValuesList:
-                    if rowValue[0] != None: # key exists
-                        item = QListWidgetItem(str(rowValue[0]) + ' : ' + str(rowValue[1]))
-                    else:
-                        item = QListWidgetItem(str(rowValue[1]))
-                    item.setData(Qt.UserRole, rowValue)
-                    self.parent.page.widget(3).addItem(item)
+                print('todo')
+    
+    def __global_search(self, text):
+        # fixme! 筛选模式和作者名
+        rowValuesList = self.parent.ops.search(text)
+        for rowValue in rowValuesList:
+            if rowValue[0] != None: # key exists
+                item = QListWidgetItem(str(rowValue[0]) + ' : ' + str(rowValue[1]))
+            else:
+                item = QListWidgetItem(str(rowValue[1]))
+            item.setData(Qt.UserRole, rowValue)
+            self.parent.page.widget(0).addItem(item)
 
 # 创建记忆碎片的交互界面，等待用户输入信息（关键词、内容、标签）
 # todo: 可选标签，或新建自定义标签
@@ -150,8 +164,10 @@ class App(QWidget):
             button.clicked.connect(self.pageButtonClick)
             self.pageButtonList.append(button)
             i += 1
-        self.pageButtonList[0].setStyleSheet(self.confData['pageButton']['layout']['selectedStyle']) # 默认选中第一个页面，更改按钮样式
+        # self.pageButtonList[0].setStyleSheet(self.confData['pageButton']['layout']['selectedStyle']) 
         self.lastPageButtonIndex = 0
+        # 默认选中第一个页面，更改按钮样式
+        self.pageButtonList[0].setStyleSheet(self.confData['pageButton']['layout']['selectedStyle'])
         # 基本操作图标
         self.opsButtonList = []
         i = 0
@@ -189,6 +205,7 @@ class App(QWidget):
         if self.lastPageButtonIndex == index:
             return
         else:
+            self.page.widget(self.lastPageButtonIndex).clear()
             self.lastPageButtonIndex = index
             self.page.setCurrentIndex(index)
 
@@ -197,9 +214,6 @@ class App(QWidget):
         # 将点击的按钮下划线标记
         self.pageButtonList[index].setStyleSheet(self.confData['pageButton']['layout']['selectedStyle'])
     
-    def showDetail(self, author, time, tagList):
-        pass
-
     def scrollItemClick(self, item):
         data = item.data(Qt.UserRole)
         time = data[4] if len(data) > 4 else "Unknown Time"
@@ -210,15 +224,13 @@ class App(QWidget):
         pyperclip.copy(item.text())
 
     def createScroll(self):
-        for t in self.pageNameList:
+        i = 0
+        while i <= len(self.pageNameList):
             listWidget = QListWidget()
             listWidget.itemClicked.connect(self.scrollItemClick)
             self.layoutConfigure(listWidget, self.confData['scroll']['layout'])
             self.page.addWidget(listWidget)
-
-    # 绑定UI和操作
-    def bind(self):
-        pass
+            i += 1
 
     def initData(self):
         self.memPath = self.curPath + self.confData['memory']['path']
@@ -226,7 +238,6 @@ class App(QWidget):
         self.ops = FragOps.FragOps(self.memFile, self.user)
         self.threadStopEvent = threading.Event()
         self.searchCheckThread = searchCheckWork(self)
-        self.searchCheckThread.indexChange.connect(self.pushPageButton)
         self.searchCheckThread.start()
 
     def __newClick(self):

@@ -110,7 +110,7 @@ class FragOps:
         maxRatioList = heapq.nlargest(10, ratioList) # 获取n个最大匹配度的值
         indexList = [] # 记录最大匹配度内容对应的索引号
         for t in maxRatioList:
-            if t < 30:
+            if t < 20:
                 continue
             index = ratioList.index(t)
             ratioList[index] = 0 # 不忽略匹配度相同的索引号
