@@ -173,12 +173,13 @@ class App(QWidget):
         self.opsButtonList[2].clicked.connect(self.__importClick)
 
     def getWelcome(self):
+        self.user = self.confData['user']['name']
         hour = datetime.now().hour
-        if 0 <= hour < 5:       return self.confData['welcome']['greeting']['midnight']
-        elif 5 <= hour < 11:    return self.confData['welcome']['greeting']['morning']
-        elif 1 <= hour < 13:    return self.confData['welcome']['greeting']['noon']
-        elif 13 <= hour < 18:   return self.confData['welcome']['greeting']['afternoon']
-        elif 18 <= hour < 22:   return self.confData['welcome']['greeting']['evening']
+        if 0 <= hour < 5:       return self.confData['welcome']['greeting']['midnight'] + ', ' + self.user
+        elif 5 <= hour < 11:    return self.confData['welcome']['greeting']['morning'] + ', ' + self.user
+        elif 1 <= hour < 13:    return self.confData['welcome']['greeting']['noon'] + ', ' + self.user
+        elif 13 <= hour < 18:   return self.confData['welcome']['greeting']['afternoon'] + ', ' + self.user
+        elif 18 <= hour < 22:   return self.confData['welcome']['greeting']['evening'] + ', ' + self.user
         else:                   return self.confData['welcome']['greeting']['night']
 
     def tagButtonCallback(self): # 根据按下的不同按钮，切换到指定页面
@@ -196,7 +197,6 @@ class App(QWidget):
         pass
 
     def initData(self):
-        self.user = self.confData['user']['name']
         self.memPath = self.curPath + self.confData['memory']['path']
         self.memFile = self.memPath + self.confData['memory']['name']
         self.ops = FragOps.FragOps(self.memFile, self.user)
@@ -207,6 +207,7 @@ class App(QWidget):
 
     # todo 将浏览UI改为设置，配置各个参数
     # todo 检查配置状态，动态更新部分设置，不能更新的就提醒用户重启应用才能生效，可以选择是否现在重启
+    # todo 切换记忆
     def __setClick(self):
         self.process = QProcess(self)
         self.process.start(self.confData['user']['edit'], [self.confFile])

@@ -15,7 +15,7 @@
         "desc" : "主界面设置",
         "title" : "记忆碎片",
         "layout" : {
-            "font" : "Microsoft YaHei", "fontsize" : 10, "x" : 300, "y" : 300, "w" : 1200, "h" : 650
+            "font" : "Microsoft YaHei", "fontsize" : 10, "x" : 1800, "y" : 700, "w" : 1200, "h" : 650
         }
     },
 
@@ -30,7 +30,7 @@
             "afternoon" : "下午好",
             "evening" : "晚上好",
             "night" : "夜深了",
-            "midnight" : "什么阴间时间了，还不睡觉"
+            "midnight" : "这个点还不睡觉"
         }
     },
 
@@ -53,7 +53,7 @@
     "tagButton" : {
         "desc" : "标签按钮",
         "name" : {
-            "0" : "最近", "1" : "收藏", "2" : "项目"
+            "0" : "历史", "1" : "收藏", "2" : "最近"
         },
         "layout" : {
             "font" : "Microsoft YaHei", "fontsize" : 12, "x" : 80, "y" : 210, "w" : 60, "h" : 40, "xOffset" : 100,
