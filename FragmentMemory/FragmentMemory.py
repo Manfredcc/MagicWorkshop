@@ -222,7 +222,7 @@ class App(QWidget):
         tagList = data[2] if len(data) > 2 else []
         detail = f"Time : {time}  |  Author : {author}  |  Tags : {str(tagList)}"
         self.detail.setText(detail)
-        pyperclip.copy(item.text())
+        pyperclip.copy(data[1])
 
     def createScroll(self):
         i = 0
